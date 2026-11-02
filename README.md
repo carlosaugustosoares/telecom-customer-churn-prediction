@@ -17,16 +17,21 @@ Ao analisar as características dos clientes, dois insights de negócio principa
 ![Churn por Tempo](churn_por_tempo.png)
 
 ## 3. Solução Técnica e Avaliação do Modelo
-Utilizei o algoritmo **Random Forest Classifier** por sua robustez e capacidade de lidar com múltiplas variáveis categóricas e numéricas. Os resultados obtidos na base de teste (1.409 clientes) foram:
 
-* **Acurácia Geral:** 80% — O modelo classifica corretamente 8 em cada 10 clientes.
-* **Precisão para Churn (Classe 1):** 66% — Quando o modelo faz uma previsão de cancelamento, a assertividade é de 66%.
-* **Recall para Churn (Classe 1):** 47% — O modelo identificou corretamente 47% dos clientes que de fato cancelaram.
+Na primeira tentativa, utilizei o algoritmo **Random Forest Classifier** básico. Os resultados obtidos na base de teste (1.409 clientes) foram:
 
-**Análise Crítica:** Embora a acurácia geral seja alta (80%), o modelo ainda falha em detectar mais da metade dos clientes em risco de saída (Recall de 47%). Isso ocorre porque o algoritmo tende a se especializar na classe majoritária (clientes que permanecem). Para o negócio, perder um Churn real custa mais caro do que gerar um alarme falso, tornando o aumento do Recall a nossa prioridade número um.
+* **Acurácia Geral:** 80%
+* **Precisão para Churn (Classe 1):** 66%
+* **Recall para Churn (Classe 1):** 47%
 
-## 4. Próximos Passos (Melhorias Futuras)
-Para evoluir o projeto e torná-lo ainda mais estratégico para o negócio, os próximos passos práticos incluem:
-* **Balanceamento de Dados:** Aplicar técnicas de reamostragem ou ajustar o parâmetro de pesos das classes para forçar o modelo a aprender melhor as características dos clientes que cancelam.
-* **Otimização de Hiperparâmetros:** Utilizar tuning para ajustar os parâmetros das árvores de decisão.
-* **Testar Modelos de Boosting:** Implementar algoritmos avançados como XGBoost ou LightGBM.
+### Tentativa de Otimização (Pesos Balanceados)
+Identificando que o modelo falhava em detectar mais da metade dos clientes em risco de saída (Recall de 47%), apliquei o parâmetro `class_weight='balanced'` para tentar penalizar os erros da classe minoritária. 
+
+No entanto, o comportamento do algoritmo se manteve estável, mantendo o **Recall em 47%** e a **Precisão em 68%**. Isso demonstra que, para este conjunto de dados específico, apenas balancear o peso interno das árvores de decisão não foi suficiente para mover o limiar de decisão do modelo.
+
+## 4. Próximos Passos (Próximas Sprints do Projeto)
+Como cientista de dados focado no negócio, sei que manter o Recall baixo significa perder dinheiro deixando clientes irem embora. Por isso, as próximas etapas planejadas para este repositório são:
+
+1. **Balanceamento de Dados Avançado (SMOTE):** Utilizar a biblioteca `imblearn` para gerar dados sintéticos dos clientes que deram Churn, equilibrando a base antes do treino.
+2. **Ajuste de Limiar de Decisão (Threshold Tuning):** Modificar manualmente o ponto de corte da probabilidade do modelo (mudar de 0.5 para 0.3, por exemplo) para priorizar o Recall em detrimento da Precisão.
+3. **Mudança de Algoritmo:** Implementar o **XGBoost** ou **LightGBM**, algoritmos baseados em gradiente que costumam performar melhor em cenários tabulares complexos e desbalanceados.
