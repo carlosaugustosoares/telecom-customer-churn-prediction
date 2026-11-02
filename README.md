@@ -16,22 +16,24 @@ Ao analisar as características dos clientes, dois insights de negócio principa
 
 ![Churn por Tempo](churn_por_tempo.png)
 
-## 3. Solução Técnica e Avaliação do Modelo
+## 3. Abordagem Prática e Evolução dos Modelos
+Como a base de dados é altamente desbalanceada, os algoritmos tradicionais tendem a focar na classe majoritária (clientes que ficam). Para resolver isso e priorizar o negócio, adotei uma abordagem de melhoria contínua em 4 etapas focando estritamente em aumentar o **Recall da Classe 1 (Churn)**.
 
-Na primeira tentativa, utilizei o algoritmo **Random Forest Classifier** básico. Os resultados obtidos na base de teste (1.409 clientes) foram:
+Abaixo está a tabela comparativa dos resultados reais obtidos na base de teste (1.409 clientes):
 
-* **Acurácia Geral:** 80%
-* **Precisão para Churn (Classe 1):** 66%
-* **Recall para Churn (Classe 1):** 47%
+| Experimento | Algoritmo / Técnica | Acurácia Geral | Precisão (Churn) | Recall (Churn) | F1-Score (Churn) |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **Mapeamento Inicial** | Random Forest (Padrão) | 80% | 66% | 47% | 55% |
+| **Experimento 1** | Random Forest + SMOTE | 78% | 58% | 58% | 58% |
+| **Experimento 2** | XGBoost Balanceado | 76% | 54% | 67% | 60% |
+| **Experimento 3 (Vencedor)** | **XGBoost + Ajuste de Limiar (0.35)** | **74%** | **51%** | **78%** | **62%** |
 
-### Tentativa de Otimização (Pesos Balanceados)
-Identificando que o modelo falhava em detectar mais da metade dos clientes em risco de saída (Recall de 47%), apliquei o parâmetro `class_weight='balanced'` para tentar penalizar os erros da classe minoritária. 
+### 🧠 Análise Crítica do Resultado de Negócio
+* **Por que o Experimento 3 é o melhor para a empresa?** No modelo inicial, a empresa perdia **53%** dos clientes que iam cancelar sem receber nenhum aviso prévio (Recall de 47%). No modelo final, ao reduzir o limiar de decisão para `0.35`, o modelo tornou-se muito mais sensível: agora detectamos **78%** dos cancelamentos reais antes que eles aconteçam.
+* **O Trade-off:** Para salvar mais clientes, aceitamos uma queda controlada na precisão (51%). Isso significa que o time de marketing fará algumas ofertas para clientes que talvez não fossem cancelar imediatamente, mas o custo desse "alarme falso" (como um cupom ou pequeno desconto) é drasticamente menor do que o custo total de perder um contrato recorrente para a concorrência.
 
-No entanto, o comportamento do algoritmo se manteve estável, mantendo o **Recall em 47%** e a **Precisão em 68%**. Isso demonstra que, para este conjunto de dados específico, apenas balancear o peso interno das árvores de decisão não foi suficiente para mover o limiar de decisão do modelo.
-
-## 4. Próximos Passos (Próximas Sprints do Projeto)
-Como cientista de dados focado no negócio, sei que manter o Recall baixo significa perder dinheiro deixando clientes irem embora. Por isso, as próximas etapas planejadas para este repositório são:
-
-1. **Balanceamento de Dados Avançado (SMOTE):** Utilizar a biblioteca `imblearn` para gerar dados sintéticos dos clientes que deram Churn, equilibrando a base antes do treino.
-2. **Ajuste de Limiar de Decisão (Threshold Tuning):** Modificar manualmente o ponto de corte da probabilidade do modelo (mudar de 0.5 para 0.3, por exemplo) para priorizar o Recall em detrimento da Precisão.
-3. **Mudança de Algoritmo:** Implementar o **XGBoost** ou **LightGBM**, algoritmos baseados em gradiente que costumam performar melhor em cenários tabulares complexos e desbalanceados.
+## 4. O que eu aprendi neste projeto (Conclusões Técnicas)
+* **Tratamento de Missing Values:** Identificação e imputação de valores nulos ocultos (espaços em branco convertidos para `NaN`) usando a mediana dos dados de treino para evitar falhas matemáticas em algoritmos sensíveis.
+* **Lidar com Dados Desbalanceados:** Aplicação prática de técnicas de oversampling sintético (SMOTE) e manipulação do parâmetro de peso interno (`scale_pos_weight`) no XGBoost.
+* **Métricas Alinhadas ao Negócio:** Entendimento prático de que a Acurácia pode ser uma métrica ilusória em dados desbalanceados, e que a escolha final entre Precisão e Recall deve ser guiada pelo impacto financeiro do problema.
+* **Otimização por Threshold:** Calibração manual do limiar de probabilidade para ajustar a sensibilidade do algoritmo ao cenário ideal do negócio.
